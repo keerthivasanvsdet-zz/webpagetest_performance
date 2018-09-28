@@ -141,8 +141,8 @@ public class CommonWrappers extends CommonApiWrappers {
 		return DestFilePath;
 	}
 
-	public static void tearDown() throws IOException {
-		System.out.println(driver.manage().getCookieNamed("ia_session_id"));
+	public static void tearDown(String cookieName) throws IOException {
+		System.out.println(driver.manage().getCookieNamed(cookieName));
 		analyzeLog();
 		driver.quit();
 	}
@@ -155,8 +155,8 @@ public class CommonWrappers extends CommonApiWrappers {
         }
     }
 
-	public static void takeSnapshot() throws IOException {
-		takeScreenshot(driver, System.getProperty("screenshotdirectory"));
+	public static void takeSnapshot(String directory) throws IOException {
+		takeScreenshot(driver, directory);
 	}
 
 	protected static void waitForElement(String element) throws InterruptedException {
@@ -328,7 +328,7 @@ public class CommonWrappers extends CommonApiWrappers {
 		}
 	}
 
-	// To Read the URL Of Ngapi
+	// To Read the URL
 	protected static String readUrl(String urlString) throws Exception {
 		BufferedReader reader = null;
 		try {
@@ -348,16 +348,16 @@ public class CommonWrappers extends CommonApiWrappers {
 	}
 
 	// Select Required Checkbox
-	public void selectRequiredFilter(String FilterXPath, String LabelText) throws InterruptedException {
+	public void selectRequiredFilter(String filterXPath, String labelText) throws InterruptedException {
 
-		List<WebElement> CheckBoxList = driver.findElements(By.xpath(FilterXPath));
+		List<WebElement> CheckBoxList = driver.findElements(By.xpath(filterXPath));
 		Iterator<WebElement> itr = CheckBoxList.iterator();
 		while (itr.hasNext()) {
 			WebElement text = itr.next();
 			System.out.println("Filter Name: " + text.getText());
 			waitForPageLoad(driver);
 			Thread.sleep(5000L);
-			if (text.getText().equalsIgnoreCase(LabelText)) {
+			if (text.getText().equalsIgnoreCase(labelText)) {
 				System.out.println("Location: " + text.getLocation());
 				System.out.println("Displayed in Front-end: " + text.isDisplayed());
 				Actions actions = new Actions(driver);
@@ -369,7 +369,7 @@ public class CommonWrappers extends CommonApiWrappers {
 		}
 	}
 	
-	public static WebDriver clickTextBoxById(String id,String data) {
+	public static WebDriver sendKeysById(String id,String data) {
 		waitForPageLoad(driver);
 		wait.until(ExpectedConditions.visibilityOfElementLocated(By.id(id)));
 		wait.until(ExpectedConditions.presenceOfElementLocated(By.id(id)));
@@ -414,21 +414,6 @@ public class CommonWrappers extends CommonApiWrappers {
 		waitForPageLoad(driver);
 		JavascriptExecutor jse = (JavascriptExecutor) driver;
 		jse.executeScript("window.scrollBy("+from+","+to+")", "");
-		return driver;
-	}
-	
-	public static WebDriver getOrderAndProductDetailsInSuccessPage(String ordercssselector,String productcssselector) throws InterruptedException{
-		waitForPageLoad(driver);
-        waitForElement(ordercssselector); 
-		wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(ordercssselector)));
-		if (driver.findElement(By.cssSelector(ordercssselector)).isDisplayed()) {
-			System.out.println("ORDER PLACED SUCCESSFULLY!!!");
-			System.out.println("SUCCESS PAGE!!!");
-		}
-		
-		System.out.println(driver.findElement(By.cssSelector(ordercssselector)).getText());
-		wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(productcssselector)));
-		System.out.println(driver.findElement(By.cssSelector(productcssselector)).getText());
 		return driver;
 	}
 	
@@ -497,171 +482,11 @@ public class CommonWrappers extends CommonApiWrappers {
 		}		
 	}
 	
-	public void resendKeys(String id){						
-		clickTextBoxById(id,"600006");			
-	}
-	
-	public void sendUserDetailsFastCheckout(String pincodebyid,String phonebyid,String namebyid,String emailbyid) throws InterruptedException{
-		waitForPageLoad(driver);
-		waitForElement(pincodebyid);			
-		
-		clickTextBoxById(pincodebyid,System.getProperty("pincode"));
-		
-		String num=driver.findElement(By.id(pincodebyid)).getAttribute("value");
-		System.out.println(num);
-		int number = num.length();	
-		System.out.println(number);
-		int i=0;
-		while(driver.findElement(By.id(pincodebyid)).getAttribute("value").length()<6){			
-			String numCheck=driver.findElement(By.id(pincodebyid)).getAttribute("value");
-			System.out.println(numCheck);
-			int numberLength = numCheck.length();
-			if(numberLength<6){
-				resendKeys(pincodebyid);
-				System.out.println("Keys Sent Again:"+i+++"!!!");
-			}
-		}
-		
-		waitForPageLoad(driver);
-		waitForElement(phonebyid);						
-		
-		clickTextBoxById(phonebyid,System.getProperty("userphone"));
-
-		clickTextBoxById(namebyid,System.getProperty("username"));
-		
-		clickTextBoxById(emailbyid,System.getProperty("useremail"));
-	}
-	
-	public void userSignIn(String emailbyid,String passwordbyid,String signinbuttonxpath,String myorderstextxpath) throws InterruptedException, IOException{
-		
-		// Enter Email ID
-		clickTextBoxById(emailbyid, System.getProperty("useremail"));
-
-		// Enter Password
-		clickTextBoxById(passwordbyid, System.getProperty("password"));
-
-		// Click "Sign IN"
-		clickByXpath(signinbuttonxpath);
-
-		waitForElement(myorderstextxpath);
-
-		waitForPageLoad(driver);
-		WebElement MyOrdersText = driver.findElement(By.xpath(myorderstextxpath));
-		waitForWebElement(MyOrdersText);
-
-		if (MyOrdersText.isDisplayed()) {
-			System.out.println("User Logging-In Successfull");
-		} else {
-			takeSnapshot();
-			Assert.fail("User Logging-In Un-Successfull");
-		}			
-	}
-	
 	public static String getTextByXpath(String xpath){
 		waitForPageLoad(driver);
 		WebElement element = driver.findElement(By.xpath(xpath));
 		System.out.println(element.getText());
 		return element.getText();
 	}
-	
-	public void validateLiveChat(String livechatxpath,String livechatiframe,String chatformxpath,String livechatcontenxpath,String queuedcontentxpath) throws InterruptedException, IOException{
-		if ((getCurrentTime() < 9 && getCurrentDay() != 1) || 
-			(getCurrentTime() < 9 && getCurrentDay() == 1) || 
-			(getCurrentTime() > 21 && getCurrentDay() == 1)) {
-			
-			waitForPageLoad(driver);
-			wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(livechatxpath)));
-			WebElement liveChatButton = driver.findElement(By.xpath(livechatxpath));
-			System.out.println("Live Chat Widget is Present: " + liveChatButton.isDisplayed());
-			wait.until(ExpectedConditions.elementToBeClickable(By.xpath(livechatxpath)));
-			waitForPageLoad(driver);
-			waitForElement(livechatxpath);
-			driver.findElement(By.xpath(livechatxpath)).click();
 
-			driver.switchTo().defaultContent();
-			driver.switchTo().frame(driver.findElement(By.name(livechatiframe)));
-
-			waitForElement(chatformxpath);
-			WebElement Data = driver.findElement(By.xpath(chatformxpath));
-			if (Data.isDisplayed()) {
-				System.out.println(Data.getText());
-				if (Data.getText().equalsIgnoreCase(
-						"Our agents are not available right now. Please leave a message and we'll get back to you.")) {
-					System.out.println("Live Chat Form Opened");
-				} else {
-					takeSnapshot();
-					Assert.fail("Live Chat Form Didn't Open");
-				}
-			} else {
-				takeSnapshot();
-				Assert.fail("Live Chat Didn't Open");
-			}
-		} else {
-			waitForPageLoad(driver);
-			wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(livechatxpath)));
-			WebElement liveChatButton = driver.findElement(By.xpath(livechatxpath));
-			System.out.println("Live Chat Widget is Present: " + liveChatButton.isDisplayed());
-			wait.until(ExpectedConditions.elementToBeClickable(By.xpath(livechatxpath)));
-			waitForPageLoad(driver);
-			waitForElement(livechatxpath);
-			driver.findElement(By.xpath(livechatxpath)).click();
-
-			driver.switchTo().defaultContent();
-			driver.switchTo().frame(driver.findElement(By.name(livechatiframe)));
-
-			waitForElement(livechatcontenxpath);
-			WebElement consultantData = driver.findElement(By.xpath(livechatcontenxpath));
-			if (consultantData.isDisplayed()) {
-				System.out.println(consultantData.getText());
-				if (consultantData.getText().contains("Consultant") || consultantData.getText().contains("Agent")) {
-					System.out.println("Live Chat Opened");
-				} else {
-					takeSnapshot();
-					Assert.fail("Live Chat Didn't Open");
-				}
-			} else {
-				WebElement queuedFormData = driver.findElement(By.xpath(queuedcontentxpath));
-				if (queuedFormData.isDisplayed()) {
-					System.out.println(queuedFormData.getText());
-					if (queuedFormData.getText().equalsIgnoreCase(
-							"One of our representatives will be with you shortly. You are number 1 in the queue. Your wait time will be approximately 1 minute(s). Thank you for your patience.")) {
-						System.out.println("Live Chat Opened");
-					} else {
-						takeSnapshot();
-						Assert.fail("Live Chat Didn't Open");
-					}
-				}
-				takeSnapshot();
-				Assert.fail("Live Chat Didn't Open");
-			}
-		}
-	}
-	
-	public void validateYotpoReviews(String yotpobuttonxpath,String yotpowindowxpath) throws IOException{
-		//Click "Yotpo" Widget
-        WebElement yotpobutton=driver.findElement(By.xpath(yotpobuttonxpath));
-        System.out.println("Yotpo Widget is Present: "+yotpobutton.isDisplayed());
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(yotpobuttonxpath)));
-        wait.until(ExpectedConditions.elementToBeClickable(By.xpath(yotpobuttonxpath)));
-        waitForPageLoad(driver);
-        yotpobutton.click();
-        
-        //Check Whether the Yotpo Window Shows Up
-        WebElement yotpoPopUp=driver.findElement(By.xpath(yotpowindowxpath));
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(yotpowindowxpath)));
-        wait.until(ExpectedConditions.elementToBeClickable(By.xpath(yotpowindowxpath)));
-        if(yotpoPopUp.isDisplayed()){
-        	try{
-        		System.out.println(yotpoPopUp.getText());
-        		Assert.assertEquals(yotpoPopUp.getText(), "What Our Happy Shoppers Have To Say.");
-        	}catch(Exception e){
-        		Assert.fail("Assert Text(What Our Happy Shoppers Have To Say.) is Missing in Yotpo PopUp");
-        		takeSnapshot();
-        	}
-        	Assert.assertTrue(true,"Yotpo Window is Present");
-        }else{
-        	takeSnapshot();
-        	Assert.fail("Yotpo PopUp is Missing");        	
-        }
-	}
 }
